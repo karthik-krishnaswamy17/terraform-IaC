@@ -9,6 +9,8 @@ variable "env-type" {}
 variable "my-ip" {}
 variable "instance-type"{}
 variable "avail-zone"{}
+
+# VPC creation
 resource "aws_vpc" "myapp-vpc" {
     cidr_block = var.vpc_cidr_block
     
@@ -18,6 +20,7 @@ resource "aws_vpc" "myapp-vpc" {
     }
 }
 
+# Subnet creation to VPC
 resource "aws_subnet" "myapp-subnet-1" {
     vpc_id = aws_vpc.myapp-vpc.id
     cidr_block = var.subnet-1_cidr_block
@@ -30,6 +33,7 @@ tags = {
   
 }
 
+# Internet Gateway creation
 resource "aws_internet_gateway" "myapp-igw" {
     vpc_id = aws_vpc.myapp-vpc.id
 
@@ -39,6 +43,7 @@ resource "aws_internet_gateway" "myapp-igw" {
     }
 }
 
+# Route table creation and mapping to igw
 resource "aws_route_table" "myapp-rt" {
     vpc_id = aws_vpc.myapp-vpc.id
     route {
@@ -49,17 +54,23 @@ resource "aws_route_table" "myapp-rt" {
       "Name" = "${var.app-name}-rt"
       "Env"= "${var.env-type}"
     }
-  
+
 }
+
+# Map Route table to created subnet-1
 resource "aws_route_table_association" "assoc-subnet"{
     subnet_id = aws_subnet.myapp-subnet-1.id
     route_table_id = aws_route_table.myapp-rt.id
 
 }
 
+#Security group creation with inbound and outboun rules
+
 resource "aws_security_group" "aws-sg" {
   name="${var.app-name}-sg"
   vpc_id = aws_vpc.myapp-vpc.id
+  
+  //in-bound rules
     ingress {
         from_port = 22
         to_port = 22
@@ -75,6 +86,7 @@ resource "aws_security_group" "aws-sg" {
         protocol = "TCP"
         cidr_blocks = ["0.0.0.0/0"]
     }
+  //outbound rules
     egress {
         from_port = 0
         to_port = 0
@@ -88,7 +100,13 @@ resource "aws_security_group" "aws-sg" {
     }
     
 }
+#Automate ssh key pair generation
+resource "aws_key_pair" "ssh-key-pair" {
+  key_name="myapp01-ssh-key-pair"
+  public_key = "${file("/home/vagrant/.ssh/id_rsa.pub")}"
+}
 
+# Fetch latest ubuntu image
 data "aws_ami" "latest-ubuntu-image"{
   most_recent = true
   owners = ["099720109477"]
@@ -107,9 +125,10 @@ filter {
 
 }
 
-output "aws_ami_image_details" {
-  value = data.aws_ami.latest-ubuntu-image.id
-}
+
+
+
+# Creation of EC2 instance.
 
 resource "aws_instance" "myapp01-server" {
   ami=data.aws_ami.latest-ubuntu-image.id
@@ -118,7 +137,7 @@ resource "aws_instance" "myapp01-server" {
   subnet_id = aws_subnet.myapp-subnet-1.id
   vpc_security_group_ids = [aws_security_group.aws-sg.id]
   availability_zone = var.avail-zone
-  key_name = "AWS-AP-Key_Pair"
+  key_name = aws_key_pair.ssh-key-pair.id
 
   tags = {
       "Name" = "${var.app-name}-ubuntu-ec2"
@@ -126,4 +145,14 @@ resource "aws_instance" "myapp01-server" {
     }
     
 
+  }
+
+# To get instance details
+data "aws_instance" "ec2-details"{
+ instance_id = aws_instance.myapp01-server.id
+}
+
+# Print public ip after creation
+output "aws_instance_details" {
+  value = data.aws_instance.ec2-details.public_ip
   }
