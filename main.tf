@@ -7,7 +7,8 @@ variable "subnet-1_cidr_block" {}
 variable "app-name" {}
 variable "env-type" {}
 variable "my-ip" {}
-
+variable "instance-type"{}
+variable "avail-zone"{}
 resource "aws_vpc" "myapp-vpc" {
     cidr_block = var.vpc_cidr_block
     
@@ -85,4 +86,44 @@ resource "aws_security_group" "aws-sg" {
       "Name" = "${var.app-name}-sg"
       "Env"= "${var.env-type}"
     }
+    
 }
+
+data "aws_ami" "latest-ubuntu-image"{
+  most_recent = true
+  owners = ["099720109477"]
+  filter{
+    name="architecture"
+    values=["x86_64"]
+  }
+  filter{
+    name="name"
+    values=["ubuntu/images/hvm-ssd/ubuntu-focal-20*"]
+  }
+filter {
+ name="virtualization-type" 
+ values = ["hvm"]
+}
+
+}
+
+output "aws_ami_image_details" {
+  value = data.aws_ami.latest-ubuntu-image.id
+}
+
+resource "aws_instance" "myapp01-server" {
+  ami=data.aws_ami.latest-ubuntu-image.id
+  instance_type = var.instance-type
+  associate_public_ip_address = true
+  subnet_id = aws_subnet.myapp-subnet-1.id
+  vpc_security_group_ids = [aws_security_group.aws-sg.id]
+  availability_zone = var.avail-zone
+  key_name = "AWS-AP-Key_Pair"
+
+  tags = {
+      "Name" = "${var.app-name}-ubuntu-ec2"
+      "Env"= "${var.env-type}"
+    }
+    
+
+  }
