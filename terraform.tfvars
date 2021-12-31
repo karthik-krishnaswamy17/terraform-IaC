@@ -5,4 +5,4 @@ env-type="dev"
 # my-ip=["171.48.52.200/32"]
 my-ip=["0.0.0.0/0"]
 instance-type="t2.micro"
-avail-zone="ap-south-1b"
+avail-zone="ap-south-1a"
