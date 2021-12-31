@@ -81,8 +81,8 @@ resource "aws_security_group" "aws-sg" {
     
     }
     ingress {
-        from_port = 8080
-        to_port = 8080
+        from_port = 80
+        to_port = 80
         protocol = "TCP"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -102,7 +102,7 @@ resource "aws_security_group" "aws-sg" {
 }
 #Automate ssh key pair generation
 resource "aws_key_pair" "ssh-key-pair" {
-  key_name="myapp01-ssh-key-pair"
+  key_name="myapp01-ssh-key-new-pair"
   public_key = "${file("/home/vagrant/.ssh/id_rsa.pub")}"
 }
 
@@ -138,7 +138,7 @@ resource "aws_instance" "myapp01-server" {
   vpc_security_group_ids = [aws_security_group.aws-sg.id]
   availability_zone = var.avail-zone
   key_name = aws_key_pair.ssh-key-pair.id
-
+  user_data = "${file("install.sh")}"
   tags = {
       "Name" = "${var.app-name}-ubuntu-ec2"
       "Env"= "${var.env-type}"
@@ -156,3 +156,7 @@ data "aws_instance" "ec2-details"{
 output "aws_instance_details" {
   value = data.aws_instance.ec2-details.public_ip
   }
+
+output "user_data_details"{
+  value = aws_instance.myapp01-server.user_data
+}
