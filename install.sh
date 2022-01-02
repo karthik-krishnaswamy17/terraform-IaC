@@ -8,3 +8,6 @@ sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker ubuntu
 docker run -p 80:80 -d --name nginx-container nginx
+sudo mkdir -p /tmp/check
+sudo touch /tmp/check/result.txt
+sudo lslogins -L | sudo tee -a /tmp/check/result.txt
