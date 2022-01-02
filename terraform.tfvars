@@ -6,3 +6,4 @@ env-type="dev"
 my-ip=["0.0.0.0/0"]
 instance-type="t2.micro"
 avail-zone="ap-south-1a"
+key_location="/home/vagrant/.ssh/id_rsa"

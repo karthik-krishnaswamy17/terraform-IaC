@@ -10,6 +10,8 @@ variable "my-ip" {}
 variable "instance-type"{}
 variable "avail-zone"{}
 
+variable "key_location" {}
+
 # VPC creation
 resource "aws_vpc" "myapp-vpc" {
     cidr_block = var.vpc_cidr_block
@@ -143,9 +145,26 @@ resource "aws_instance" "myapp01-server" {
       "Name" = "${var.app-name}-ubuntu-ec2"
       "Env"= "${var.env-type}"
     }
-    
+    connection {
+      type="ssh"
+      host=self.public_ip
+      user="ubuntu"
+      private_key=file(var.key_location)
+  }
+    provisioner "remote-exec" { 
+    inline=[
+      "sudo mkdir -p /tmp/check",
+      "sudo touch /tmp/check/result.txt",
+      "lscpu | sudo tee -a /tmp/check/result.txt"
+    ]
+  
+  }
+
 
   }
+  
+  
+  
 
 # To get instance details
 data "aws_instance" "ec2-details"{
@@ -160,3 +179,4 @@ output "aws_instance_details" {
 output "user_data_details"{
   value = aws_instance.myapp01-server.user_data
 }
+#test
