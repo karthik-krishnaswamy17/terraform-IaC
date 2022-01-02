@@ -26,6 +26,7 @@ resource "aws_vpc" "myapp-vpc" {
 resource "aws_subnet" "myapp-subnet-1" {
     vpc_id = aws_vpc.myapp-vpc.id
     cidr_block = var.subnet-1_cidr_block
+    availability_zone = var.avail-zone
     
 
 tags = {
@@ -140,28 +141,41 @@ resource "aws_instance" "myapp01-server" {
   vpc_security_group_ids = [aws_security_group.aws-sg.id]
   availability_zone = var.avail-zone
   key_name = aws_key_pair.ssh-key-pair.id
-  user_data = "${file("install.sh")}"
-  tags = {
-      "Name" = "${var.app-name}-ubuntu-ec2"
-      "Env"= "${var.env-type}"
-    }
+  
     connection {
       type="ssh"
       host=self.public_ip
       user="ubuntu"
       private_key=file(var.key_location)
   }
-    provisioner "remote-exec" { 
-    inline=[
-      "sudo mkdir -p /tmp/check",
-      "sudo touch /tmp/check/result.txt",
-      "lscpu | sudo tee -a /tmp/check/result.txt"
-    ]
+    
+     provisioner "file" {
+      source="install.sh"
+      destination="/home/ubuntu/install.sh"
+      
+    }
+
+
+    provisioner "remote-exec" {
+      inline=[
+        "sudo chmod u+x install.sh",
+        "$(pwd)/install.sh"
+      ]
+    
+    }
+   
+    provisioner "local-exec" {
+    
+    command="echo ${self.public_ip} > public_ip.txt"
+    }
+
+    tags = {
+      "Name" = "${var.app-name}-ubuntu-ec2"
+      "Env"= "${var.env-type}"
+    }
   
   }
 
-
-  }
   
   
   
