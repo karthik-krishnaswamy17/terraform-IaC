@@ -2,15 +2,7 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-variable "vpc_cidr_block" {}
-variable "subnet-1_cidr_block" {}
-variable "app-name" {}
-variable "env-type" {}
-variable "my-ip" {}
-variable "instance-type"{}
-variable "avail-zone"{}
 
-variable "key_location" {}
 
 # VPC creation
 resource "aws_vpc" "myapp-vpc" {
@@ -28,7 +20,7 @@ module "module-subnet" {
   app-name=var.app-name
   env-type=var.env-type
   avail-zone=var.avail-zone
-  vpc_id=aws_vpc.myapp-vpc.id
+  myapp-vpc=aws_vpc.myapp-vpc
 
 }
 
@@ -104,7 +96,7 @@ resource "aws_instance" "myapp01-server" {
   ami=data.aws_ami.latest-ubuntu-image.id
   instance_type = var.instance-type
   associate_public_ip_address = true
-  subnet_id = moudle.module-subnet.subnet-out.id
+  subnet_id = module.module-subnet.subnet-out.id
   vpc_security_group_ids = [aws_security_group.aws-sg.id]
   availability_zone = var.avail-zone
   key_name = aws_key_pair.ssh-key-pair.id
@@ -152,12 +144,3 @@ data "aws_instance" "ec2-details"{
  instance_id = aws_instance.myapp01-server.id
 }
 
-# Print public ip after creation
-output "aws_instance_details" {
-  value = data.aws_instance.ec2-details.public_ip
-  }
-
-output "user_data_details"{
-  value = aws_instance.myapp01-server.user_data
-}
-#test
