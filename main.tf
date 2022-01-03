@@ -22,50 +22,17 @@ resource "aws_vpc" "myapp-vpc" {
     }
 }
 
-# Subnet creation to VPC
-resource "aws_subnet" "myapp-subnet-1" {
-    vpc_id = aws_vpc.myapp-vpc.id
-    cidr_block = var.subnet-1_cidr_block
-    availability_zone = var.avail-zone
-    
-
-tags = {
-      "Name" = "${var.app-name}-subnet-1"
-      "Env"= "${var.env-type}"
-    }
-  
-}
-
-# Internet Gateway creation
-resource "aws_internet_gateway" "myapp-igw" {
-    vpc_id = aws_vpc.myapp-vpc.id
-
-  tags = {
-      "Name" = "${var.app-name}-igw"
-      "Env"= "${var.env-type}"
-    }
-}
-
-# Route table creation and mapping to igw
-resource "aws_route_table" "myapp-rt" {
-    vpc_id = aws_vpc.myapp-vpc.id
-    route {
-        cidr_block = "0.0.0.0/0"
-        gateway_id = aws_internet_gateway.myapp-igw.id
-    }
-    tags = {
-      "Name" = "${var.app-name}-rt"
-      "Env"= "${var.env-type}"
-    }
+module "module-subnet" {
+  source = "./modules/subnet"
+  subnet-1_cidr_block = var.subnet-1_cidr_block
+  app-name=var.app-name
+  env-type=var.env-type
+  avail-zone=var.avail-zone
+  vpc_id=aws_vpc.myapp-vpc.id
 
 }
 
-# Map Route table to created subnet-1
-resource "aws_route_table_association" "assoc-subnet"{
-    subnet_id = aws_subnet.myapp-subnet-1.id
-    route_table_id = aws_route_table.myapp-rt.id
 
-}
 
 #Security group creation with inbound and outboun rules
 
@@ -137,7 +104,7 @@ resource "aws_instance" "myapp01-server" {
   ami=data.aws_ami.latest-ubuntu-image.id
   instance_type = var.instance-type
   associate_public_ip_address = true
-  subnet_id = aws_subnet.myapp-subnet-1.id
+  subnet_id = moudle.module-subnet.subnet-out.id
   vpc_security_group_ids = [aws_security_group.aws-sg.id]
   availability_zone = var.avail-zone
   key_name = aws_key_pair.ssh-key-pair.id
