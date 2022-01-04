@@ -6,3 +6,5 @@ variable "my-ip" {}
 variable "instance-type"{}
 variable "avail-zone"{}
 variable "key_location" {}
+variable "owners" {}
+variable "image_name" {}

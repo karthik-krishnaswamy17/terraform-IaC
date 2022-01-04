@@ -1,5 +1,5 @@
-vpc_cidr_block="10.0.0.0/27"
-subnet-1_cidr_block="10.0.0.0/28"
+vpc_cidr_block="10.0.0.0/25"
+subnet-1_cidr_block="10.0.0.0/25"
 app-name="my-app"
 env-type="dev"
 # my-ip=["171.48.52.200/32"]
@@ -7,3 +7,5 @@ my-ip=["0.0.0.0/0"]
 instance-type="t2.micro"
 avail-zone="ap-south-1a"
 key_location="/home/vagrant/.ssh/id_rsa"
+owners="099720109477"
+image_name="ubuntu/images/hvm-ssd/ubuntu-focal-20*"
